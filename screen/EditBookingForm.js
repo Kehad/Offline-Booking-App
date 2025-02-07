@@ -80,7 +80,8 @@ export const EditBookingForm = ({ booking, onSave, onCancel, isLoading }) => {
                 style={styles.input}
                 value={formData.weight}
                 onChangeText={(text) => handleChange("weight", text)}
-                keyboardType="decimal-pad"
+                            
+                              keyboardType="decimal-pad"
                 placeholder="Enter weight"
               />
             </View>

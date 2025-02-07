@@ -75,6 +75,9 @@ npx expo run:android
 ### Viewing Booking Details
 - Tap on any booking in the list to view its details
 - View sync status, route information, and booking details
+- Press "Refresh" icon to sync the booking
+- Press "Delete" icon to delete the booking
+- Press the "Edit" icon to edit the booking
 - Delete bookings using the trash icon
 
 ### Syncing Bookings
