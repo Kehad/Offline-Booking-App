@@ -7,24 +7,22 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
-  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Network from "expo-network";
 
-import {
-  deleteBooking,
-  updateBookingSyncStatus,
-} from "../utils/storage";
-
-const { width } = Dimensions.get("window");
+import { deleteBooking, updateBookingSyncStatus } from "../utils/storage";
+import { EditBookingForm } from "./EditBookingForm";
 
 export default function BookingDetailsScreen({ route, navigation }) {
   const { booking } = route.params;
   const [isSyncing, setIsSyncing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  //  const [isEditing, setIsEditing] = useState(false);
+  //  const [isUpdating, setIsUpdating] = useState(false);
+  const [currentBooking, setCurrentBooking] = useState(booking);
 
-  const handleSync = async (bookingId) => {
+  const handleSync = async (booking) => {
     try {
       setIsSyncing(true);
       const networkState = await Network.getNetworkStateAsync();
@@ -32,7 +30,11 @@ export default function BookingDetailsScreen({ route, navigation }) {
         Alert.alert("Error", "No internet connection available");
         return;
       }
-      const syncStatus = await updateBookingSyncStatus(bookingId);
+
+      const isConnected =
+        networkState.isConnected && networkState.isInternetReachable;
+      const updatedBooking = { ...booking, synced: isConnected };
+      const syncStatus = await updateBookingSyncStatus(updatedBooking);
       Alert.alert("Success", "Booking synced successfully");
       navigation.goBack();
     } catch (error) {
@@ -72,13 +74,41 @@ export default function BookingDetailsScreen({ route, navigation }) {
     );
   };
 
-  if (!booking) {
+  // const handleCancelEdit = () => {
+  //   setIsEditing(false);
+  // };
+  //  const handleSaveEdit = async (updatedBooking) => {
+  //    try {
+  //      setIsUpdating(true);
+  //      console.log(updatedBooking);
+  //      await updateBookingSyncStatus(updatedBooking);
+  //      setCurrentBooking(updatedBooking);
+  //      setIsEditing(false);
+  //      Alert.alert("Success", "Booking updated successfully");
+  //     navigation.goBack();
+  //    } catch (error) {
+  //      Alert.alert("Error", "Failed to update booking");
+  //    } finally {
+  //      setIsUpdating(false);
+  //    }
+  //  };
+
+  if (!currentBooking) {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>Booking not found</Text>
       </View>
     );
   }
+
+  const handleEdit = () => {
+    navigation.navigate("EditBooking", {
+      booking: currentBooking,
+      onSave: (updatedBooking) => {
+        setCurrentBooking(updatedBooking);
+      },
+    });
+  };
 
   return (
     <ScrollView style={styles.container} bounces={false}>
@@ -89,18 +119,27 @@ export default function BookingDetailsScreen({ route, navigation }) {
             <View
               style={[
                 styles.statusBadge,
-                booking.synced ? styles.syncedBadge : styles.pendingBadge,
+                currentBooking.synced
+                  ? styles.syncedBadge
+                  : styles.pendingBadge,
               ]}
             >
               <Text style={styles.statusText}>
-                {booking.synced ? "Synced" : "Pending"}
+                {currentBooking.synced ? "Synced" : "Pending"}
               </Text>
             </View>
 
-            {!booking.synced && (
+            <TouchableOpacity
+              style={[styles.iconButton, styles.editButton]}
+              onPress={handleEdit}
+            >
+              <Ionicons name="pencil" size={20} color="#FFA000" />
+            </TouchableOpacity>
+
+            {!currentBooking.synced && (
               <TouchableOpacity
                 style={[styles.iconButton, styles.syncButton]}
-                onPress={() => handleSync(booking.id)}
+                onPress={() => handleSync(currentBooking)}
                 disabled={isSyncing}
               >
                 {isSyncing ? (
@@ -113,7 +152,7 @@ export default function BookingDetailsScreen({ route, navigation }) {
 
             <TouchableOpacity
               style={[styles.iconButton, styles.deleteButton]}
-              onPress={() => handleDeletes(booking.id)}
+              onPress={() => handleDeletes(currentBooking.id)}
               disabled={isDeleting}
             >
               {isDeleting ? (
@@ -125,6 +164,8 @@ export default function BookingDetailsScreen({ route, navigation }) {
           </View>
         </View>
 
+        {/* ... rest of the existing JSX remains the same, 
+            just update 'booking' references to 'currentBooking' ... */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Shipment Route</Text>
           <View style={styles.routeContainer}>
@@ -178,6 +219,7 @@ export default function BookingDetailsScreen({ route, navigation }) {
             </Text>
           </View>
         </View>
+        {/* </View> */}
       </View>
     </ScrollView>
   );
@@ -326,5 +368,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#f44336",
     fontWeight: "500",
+  },
+  editButton: {
+    backgroundColor: "#FFF3E0",
   },
 });

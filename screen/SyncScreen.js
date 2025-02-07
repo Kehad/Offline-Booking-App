@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from "react-native";
-import { useDispatch } from "react-redux";
 import { useFocusEffect } from "@react-navigation/native";
 
 import * as Network from "expo-network";
@@ -16,7 +15,6 @@ import { loadBookings, updateBookingSyncStatus } from "../utils/storage";
 import { Feather, Ionicons } from "@expo/vector-icons";
 
 export default function SyncScreen() {
-  const dispatch = useDispatch();
   const [isOnline, setIsOnline] = useState(false);
   const [syncBookings, setSyncBookings] = useState([]);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -67,7 +65,11 @@ export default function SyncScreen() {
   const syncBooking = async (booking) => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      await updateBookingSyncStatus(booking.id);
+       const networkState = await Network.getNetworkStateAsync();
+      const isConnected =
+        networkState.isConnected && networkState.isInternetReachable;
+      const updatedBooking = { ...booking, synced: isConnected };
+await updateBookingSyncStatus(updatedBooking);
       return true;
     } catch (error) {
       console.error(`Error syncing booking ${booking.id}:`, error);
@@ -89,6 +91,8 @@ export default function SyncScreen() {
       const total = syncBookings.length;
 
       for (const [index, booking] of syncBookings.entries()) {
+        console.log(booking)
+       
         const success = await syncBooking(booking);
         if (success) {
           successCount++;
